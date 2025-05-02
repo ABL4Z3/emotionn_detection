@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Voice Emotion Detector</title>
+<style>
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  header h1 {
+    font-weight: 900;
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+  }
+  header p {
+    font-size: 1rem;
+    opacity: 0.85;
+    margin-top: 0;
+  }
+  main {
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 12px;
+    padding: 1rem 1.5rem 2rem 1.5rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  input[type="file"] {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .record-btn {
+    background: #764ba2;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+    margin-bottom: 1rem;
+    user-select: none;
+  }
+  .record-btn.recording {
+    background: #e65858;
+    animation: pulse 1.2s infinite alternate;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(230, 88, 88, 0.7); }
+    100% { box-shadow: 0 0 10px 8px rgba(230, 88, 88, 0); }
+  }
+  textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 100px;
+    border-radius: 8px;
+    border: none;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 1rem;
+  }
+  .result-section {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+  }
+  .emotion {
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    text-transform: capitalize;
+  }
+  .tips {
+    font-size: 1rem;
+    line-height: 1.3;
+    margin-top: 0;
+  }
+  .warning {
+    background: #ffc107;
+    color: #333;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  footer {
+    margin-top: auto;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    text-align: center;
+    padding: 1rem 0 0 0;
+    width: 100%;
+  }
+  /* Responsive */
+  @media (max-width: 400px) {
+    main {
+      padding: 1rem;
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Voice Emotion Detector</h1>
+  <p>Upload a recording or record live to detect emotions & get tips</p>
+</header>
+<main>
+  <label for="audioUpload">Upload Voice Recording (wav/mp3/m4a):</label>
+  <input type="file" id="audioUpload" accept="audio/*" />
+
+  <button id="recordButton" class="record-btn" title="Click to start recording">Start Recording</button>
+
+  <label for="transcript">Transcribed Text:</label>
+  <textarea id="transcript" rows="6" placeholder="Transcription will appear here..." readonly></textarea>
+
+  <div id="emotionResult" class="result-section" style="display:none;">
+    <div class="emotion" id="detectedEmotion"></div>
+    <p class="tips" id="emotionTips"></p>
+  </div>
+
+  <div id="warningMsg" class="warning" style="display:none;"></div>
+</main>
+<footer>
+  &copy; 2024 Voice Emotion Detector. Uses Web Speech API & client-side sentiment analysis.
+</footer>
+
+<script>
+  // Sentiment analysis library (simple polarity based)
+  class Sentiment {
+    constructor() {
+      this.positiveWords = ["happy", "joy", "love", "excited", "great", "wonderful", "fantastic", "good", "pleased", "delight"];
+      this.negativeWords = ["sad", "anger", "angry", "upset", "bad", "hate", "terrible", "worst", "frustrated", "depressed"];
+      this.sadWords = ["sad", "depressed", "heartbroken", "lonely", "cry", "tears", "melancholy"];
+      this.angryWords = ["angry", "frustrated", "mad", "furious", "irritated", "annoyed"];
+      this.happyWords = ["happy", "joy", "pleased", "excited", "delight", "smile", "cheerful"];
+      this.fearWords = ["fear", "scared", "nervous", "anxious", "worried"];
+      this.surpriseWords = ["surprise", "amazed", "astonished", "shocked"];
+    }
+    analyze(text) {
+      const textLower = text.toLowerCase();
+      let score = 0;
+      let emotionCount = {happy:0, sad:0, angry:0, fear:0, surprise:0, neutral:0};
+      
+      // Simple count how many words match each emotion category
+      this.happyWords.forEach(w => { if(textLower.includes(w)) emotionCount.happy++; });
+      this.sadWords.forEach(w => { if(textLower.includes(w)) emotionCount.sad++; });
+      this.angryWords.forEach(w => { if(textLower.includes(w)) emotionCount.angry++; });
+      this.fearWords.forEach(w => { if(textLower.includes(w)) emotionCount.fear++; });
+      this.surpriseWords.forEach(w => { if(textLower.includes(w)) emotionCount.surprise++; });
+
+      // Determine dominant emotion or neutral
+      let dominantEmotion = "neutral";
+      let maxCount = 0;
+      for(const [emotion, count] of Object.entries(emotionCount)) {
+        if(count > maxCount) {
+          maxCount = count;
+          dominantEmotion = emotion;
+        }
+      }
+      return dominantEmotion;
+    }
+  }
+
+  const sentiment = new Sentiment();
+
+  const recordButton = document.getElementById('recordButton');
+  const transcriptArea = document.getElementById('transcript');
+  const audioUpload = document.getElementById('audioUpload');
+  const emotionResultSection = document.getElementById('emotionResult');
+  const detectedEmotionElem = document.getElementById('detectedEmotion');
+  const emotionTipsElem = document.getElementById('emotionTips');
+  const warningMsg = document.getElementById('warningMsg');
+
+  let recognition;
+  let isRecording = false;
+
+  function tipsForEmotion(emotion) {
+    switch(emotion) {
+      case 'happy': return "Keep up the positive vibes! Share your happiness with others.";
+      case 'sad': return "It's okay to feel sad. Try talking to a friend or engaging in hobbies.";
+      case 'angry': return "Take deep breaths and pause before reacting. Consider physical activity to release tension.";
+      case 'fear': return "Identify your fears and challenge them gradually. Practice mindfulness to calm anxiety.";
+      case 'surprise': return "Embrace surprises as opportunities for growth and new experiences.";
+      default: return "Your mood seems balanced. Keep looking after your well-being!";
+    }
+  }
+
+  function displayEmotion(emotion) {
+    detectedEmotionElem.textContent = "Detected Emotion: " + emotion;
+    emotionTipsElem.textContent = tipsForEmotion(emotion);
+    emotionResultSection.style.display = "block";
+  }
+
+  function resetUI() {
+    transcriptArea.value = "";
+    detectedEmotionElem.textContent = "";
+    emotionTipsElem.textContent = "";
+    emotionResultSection.style.display = "none";
+    warningMsg.style.display = "none";
+  }
+
+  // Initialize Speech Recognition if supported
+  function initSpeechRecognition() {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!window.SpeechRecognition) {
+      warningMsg.textContent = "Web Speech API is not supported in this browser. Live recording will not work.";
+      warningMsg.style.display = "block";
+      recordButton.disabled = true;
+      return null;
+    }
+    const rec = new window.SpeechRecognition();
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.continuous = false;
+    return rec;
+  }
+
+  function startRecognition() {
+    resetUI();
+    recognition.start();
+    recordButton.textContent = "Recording...";
+    recordButton.classList.add("recording");
+    isRecording = true;
+  }
+  function stopRecognition() {
+    recognition.stop();
+    recordButton.textContent = "Start Recording";
+    recordButton.classList.remove("recording");
+    isRecording = false;
+  }
+
+  recordButton.addEventListener('click', () => {
+    if (!recognition) return;
+    if (!isRecording) {
+      startRecognition();
+    } else {
+      stopRecognition();
+    }
+  });
+
+  if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+    recognition = initSpeechRecognition();
+    if (recognition) {
+      recognition.onresult = (event) => {
+        let transcript = event.results[0][0].transcript;
+        transcriptArea.value = transcript;
+        const dominantEmotion = sentiment.analyze(transcript);
+        displayEmotion(dominantEmotion);
+      };
+      recognition.onerror = (event) => {
+        warningMsg.textContent = "Speech recognition error: " + event.error;
+        warningMsg.style.display = "block";
+        recordButton.textContent = "Start Recording";
+        recordButton.classList.remove("recording");
+        isRecording = false;
+      };
+      recognition.onend = () => {
+        if (isRecording) {
+          // Auto stop UI update
+          recordButton.textContent = "Start Recording";
+          recordButton.classList.remove("recording");
+          isRecording = false;
+        }
+      };
+    }
+  } else {
+    warningMsg.textContent = "Web Speech API is not supported in this browser. Live recording will not work.";
+    warningMsg.style.display = "block";
+    recordButton.disabled = true;
+  }
+
+  // Handle audio file upload
+  audioUpload.addEventListener('change', async (e) => {
+    resetUI();
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // We cannot process uploaded audio to text fully client-side using Web Speech API.
+    // Show warning and ask user to try live recording if possible.
+    warningMsg.innerHTML = `Uploading audio file is supported, but automatic transcription is <strong>not</strong> possible in this demo.<br>
+      Please use the <strong>Start Recording</strong> button for live speech-to-text transcription.<br>
+      Alternatively, you can transcribe your audio by external tools and paste text into the box below for emotion analysis.`;
+    warningMsg.style.display = "block";
+
+    // Alternatively, we could allow user to paste text for emotion detection as fall back
+    // So, unlock the transcript textarea editing for user
+    transcriptArea.readOnly = false;
+    transcriptArea.placeholder = "Paste your transcription here...";
+    transcriptArea.value = "";
+
+    // Add event listener to detect when user pastes/inputs text for analysis
+    transcriptArea.addEventListener('input', onTextInputForEmotion);
+
+    function onTextInputForEmotion() {
+      const text = transcriptArea.value.trim();
+      if (text.length > 0) {
+        const dominantEmotion = sentiment.analyze(text);
+        displayEmotion(dominantEmotion);
+      } else {
+        emotionResultSection.style.display = "none";
+      }
+    }
+  });
+</script>
+</body>
+</html>
