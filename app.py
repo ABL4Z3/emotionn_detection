@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from soul_link_demo import speech_to_text, detect_emotion, generate_empathy_prompt
+from soul_link_demo import speech_to_text, detect_emotion, generate_empathy_prompt, get_weighted_emotions
 from werkzeug.utils import secure_filename
 import os
 from pydub import AudioSegment
@@ -57,8 +57,15 @@ def upload_audio():
             transcription = ""
 
         emotion = detect_emotion(transcription) if transcription else "No transcription"
+        weighted_emotions = {}
         llm_response = ""
         if transcription:
+            try:
+                weighted_emotions = get_weighted_emotions(transcription)
+            except Exception as e:
+                app.logger.error(f"Error in get_weighted_emotions: {str(e)}")
+                weighted_emotions = {}
+
             try:
                 empathy_response = generate_empathy_prompt(transcription)
                 llm_response = empathy_response.content if empathy_response else ""
@@ -72,6 +79,7 @@ def upload_audio():
         return jsonify({
             'transcription': transcription,
             'emotion': emotion,
+            'weighted_emotions': weighted_emotions,
             'llm_response': llm_response
         })
     except Exception as e:

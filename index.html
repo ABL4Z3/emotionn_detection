@@ -238,8 +238,29 @@
   //   }
   // }
 
-  function displayEmotion(emotion, llmResponse) {
+  function displayEmotion(emotion, llmResponse, weightedEmotions) {
+    // Show detected emotion text
     detectedEmotionElem.textContent = "Detected Emotion: " + emotion;
+
+    // Show weighted emotion scores below detected emotion
+    let weightedEmotionElem = document.getElementById('weightedEmotionScores');
+    if (!weightedEmotionElem) {
+      weightedEmotionElem = document.createElement('div');
+      weightedEmotionElem.id = 'weightedEmotionScores';
+      weightedEmotionElem.style.marginTop = '0.5rem';
+      weightedEmotionElem.style.fontWeight = '600';
+      emotionResultSection.appendChild(weightedEmotionElem);
+    }
+    if (weightedEmotions && Object.keys(weightedEmotions).length > 0) {
+      let scoresText = "Weighted Emotion Scores: ";
+      scoresText += Object.entries(weightedEmotions)
+        .map(([emotion, score]) => `${emotion}: ${score}`)
+        .join(", ");
+      weightedEmotionElem.textContent = scoresText;
+    } else {
+      weightedEmotionElem.textContent = "";
+    }
+
     emotionTipsElem.textContent = llmResponse ? "" : "No empathetic response available.";
     emotionResultSection.style.display = "block";
     const llmResponseElem = document.getElementById('llmResponse');
@@ -458,7 +479,18 @@
       transcriptArea.value = data.transcription || '';
       transcriptArea.readOnly = true;
       transcriptArea.placeholder = "Transcription from uploaded audio";
-      displayEmotion(data.emotion || 'neutral', data.llm_response || '');
+
+      // Defensive check and parse weighted_emotions if string
+      let weightedEmotions = data.weighted_emotions || {};
+      if (typeof weightedEmotions === 'string') {
+        try {
+          weightedEmotions = JSON.parse(weightedEmotions);
+        } catch (e) {
+          weightedEmotions = {};
+        }
+      }
+
+      displayEmotion(data.emotion || 'neutral', data.llm_response || '', weightedEmotions);
       warningMsg.style.display = 'none';
 
       // Clear file input value to allow re-uploading the same file if needed
