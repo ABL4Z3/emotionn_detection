@@ -3,27 +3,35 @@ from textblob import TextBlob
 from deep_translator import GoogleTranslator
 from langchain_groq import ChatGroq
 import os
+import logging
 
-# Set Groq API key
-os.environ["GROQ_API_KEY"] = "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"
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Initialize LangChain Groq
-llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
+# Set Groq API key from environment variable or fallback to provided key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+if not GROQ_API_KEY:
+    logger.warning("GROQ_API_KEY environment variable not set. LangChain Groq may not work properly.")
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY
+
+# Initialize LangChain Groq with API key parameter
+llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0, groq_api_key=GROQ_API_KEY)
 
 def speech_to_text(audio_file):
     r = sr.Recognizer()
     with sr.AudioFile(audio_file) as source:
         audio_data = r.record(source)
+        # Remove logging of duration_seconds as AudioData has no such attribute
         try:
             text = r.recognize_google(audio_data)
-            print("\n[Speech-to-Text]")
-            print("Transcribed Text:", text)
+            logger.info("[Speech-to-Text] Transcribed Text: %s", text)
             return text
         except sr.UnknownValueError:
-            print("Could not understand audio")
+            logger.error("Could not understand audio")
             return ""
         except sr.RequestError:
-            print("API request failed")
+            logger.error("API request failed")
             return ""
 
 def detect_emotion(text):
@@ -35,22 +43,27 @@ def detect_emotion(text):
         emotion = "Negative"
     else:
         emotion = "Neutral"
-    print("\n[Emotion Detection]")
-    print(f"Detected Emotion: {emotion}")
+    logger.info("[Emotion Detection] Detected Emotion: %s", emotion)
     return emotion
 
 def translate_text(text, dest_language='es'):
-    translated = GoogleTranslator(source='auto', target=dest_language).translate(text)
-    print(f"\n[Translation]")
-    print(f"Translated Text ({dest_language}): {translated}")
-    return translated
+    try:
+        translated = GoogleTranslator(source='auto', target=dest_language).translate(text)
+        logger.info("[Translation] Translated Text (%s): %s", dest_language, translated)
+        return translated
+    except Exception as e:
+        logger.error("Translation failed: %s", str(e))
+        return ""
 
 def generate_empathy_prompt(user_text):
     prompt = f"A person said: '{user_text}'. Write an empathetic response:"
-    response = llm.invoke(prompt)
-    print("\n[Empathy Prompt]")
-    print("Empathy Response:", response.content)
-    return response
+    try:
+        response = llm.invoke(prompt)
+        logger.info("[Empathy Prompt] Empathy Response: %s", response.content)
+        return response
+    except Exception as e:
+        logger.error("Empathy prompt generation failed: %s", str(e))
+        return None
 
 if __name__ == "__main__":
     audio_file = "audio_input.wav"
@@ -68,4 +81,4 @@ if __name__ == "__main__":
         # Step 4: Empathy Prompt
         empathy_response = generate_empathy_prompt(text)
     else:
-        print("No valid text to process further.")
+        logger.info("No valid text to process further.")
