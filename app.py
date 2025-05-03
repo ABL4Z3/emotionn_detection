@@ -46,9 +46,12 @@ def upload_audio():
         # Skip audio conversion due to FFmpeg unavailability
         converted_path = filepath
 
+        # Get language parameter from form data or default to 'en-IN'
+        language = request.form.get('language', 'en-IN')
+
         # Process the WAV audio file directly
         try:
-            transcription = speech_to_text(converted_path)
+            transcription = speech_to_text(converted_path, language=language)
         except Exception as e:
             app.logger.error(f"Error in speech_to_text: {str(e)}")
             transcription = ""

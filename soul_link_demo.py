@@ -18,13 +18,12 @@ os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 # Initialize LangChain Groq with API key parameter
 llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0, groq_api_key=GROQ_API_KEY)
 
-def speech_to_text(audio_file):
+def speech_to_text(audio_file, language='en-IN'):
     r = sr.Recognizer()
     with sr.AudioFile(audio_file) as source:
         audio_data = r.record(source)
-        # Remove logging of duration_seconds as AudioData has no such attribute
         try:
-            text = r.recognize_google(audio_data)
+            text = r.recognize_google(audio_data, language=language)
             logger.info("[Speech-to-Text] Transcribed Text: %s", text)
             return text
         except sr.UnknownValueError:
