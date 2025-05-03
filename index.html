@@ -167,6 +167,8 @@
     <p class="tips" id="emotionTips"></p>
     <label for="llmResponse">Empathetic Response:</label>
     <textarea id="llmResponse" rows="4" readonly style="width: 100%; border-radius: 8px; padding: 0.5rem; font-family: inherit; margin-top: 0.5rem;"></textarea>
+    <div id="weightedEmotionScores" style="margin-top: 0.5rem; font-weight: 600;"></div>
+    <canvas id="weightedEmotionChart" style="margin-top: 1rem; max-width: 100%; height: 200px;"></canvas>
   </div>
 
   <div id="warningMsg" class="warning" style="display:none;"></div>
@@ -175,6 +177,7 @@
   &copy; 2024 Voice Emotion Detector. Uses Web Speech API & client-side sentiment analysis.
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   // Sentiment analysis library (simple polarity based)
   class Sentiment {
@@ -226,18 +229,6 @@
   let audioChunks = [];
   let isRecording = false;
 
-  // Removed tipsForEmotion function to use LLM response from backend instead
-  // function tipsForEmotion(emotion) {
-  //   switch(emotion) {
-  //     case 'happy': return "Keep up the positive vibes! Share your happiness with others.";
-  //     case 'sad': return "It's okay to feel sad. Try talking to a friend or engaging in hobbies.";
-  //     case 'angry': return "Take deep breaths and pause before reacting. Consider physical activity to release tension.";
-  //     case 'fear': return "Identify your fears and challenge them gradually. Practice mindfulness to calm anxiety.";
-  //     case 'surprise': return "Embrace surprises as opportunities for growth and new experiences.";
-  //     default: return "Your mood seems balanced. Keep looking after your well-being!";
-  //   }
-  // }
-
   function displayEmotion(emotion, llmResponse, weightedEmotions) {
     // Show detected emotion text
     detectedEmotionElem.textContent = "Detected Emotion: " + emotion;
@@ -257,14 +248,69 @@
         .map(([emotion, score]) => `${emotion}: ${score}`)
         .join(", ");
       weightedEmotionElem.textContent = scoresText;
+
+      // Update or create pie chart
+      updatePieChart(weightedEmotions);
     } else {
       weightedEmotionElem.textContent = "";
+      clearPieChart();
     }
 
     emotionTipsElem.textContent = llmResponse ? "" : "No empathetic response available.";
     emotionResultSection.style.display = "block";
     const llmResponseElem = document.getElementById('llmResponse');
     llmResponseElem.value = llmResponse || "";
+  }
+
+  let pieChart = null;
+
+  function updatePieChart(weightedEmotions) {
+    const ctx = document.getElementById('weightedEmotionChart').getContext('2d');
+    const labels = Object.keys(weightedEmotions);
+    const data = Object.values(weightedEmotions);
+
+    if (pieChart) {
+      pieChart.data.labels = labels;
+      pieChart.data.datasets[0].data = data;
+      pieChart.update();
+    } else {
+      pieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#4caf50', // green
+              '#f44336', // red
+              '#ff9800', // orange
+              '#2196f3', // blue
+              '#9c27b0', // purple
+              '#ffeb3b'  // yellow
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#fff'
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  function clearPieChart() {
+    if (pieChart) {
+      pieChart.destroy();
+      pieChart = null;
+    }
   }
 
   function resetUI() {
@@ -395,6 +441,8 @@
           recordButton.parentNode.insertBefore(existingAudio, recordButton.nextSibling);
         }
         existingAudio.src = audioURL;
+        existingAudio.load();
+        existingAudio.play();
 
         // Send WAV Blob to backend
         const formData = new FormData();
@@ -417,7 +465,7 @@
           transcriptArea.value = data.transcription || '';
           transcriptArea.readOnly = true;
           transcriptArea.placeholder = "Transcription from recorded audio";
-displayEmotion(data.emotion || 'neutral', data.llm_response || '', data.weighted_emotions || {});
+          displayEmotion(data.emotion || 'neutral', data.llm_response || '', data.weighted_emotions || {});
           warningMsg.style.display = 'none';
         } catch (error) {
           warningMsg.textContent = `Error processing recorded audio: ${error.message}`;

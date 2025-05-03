@@ -43,8 +43,21 @@ def upload_audio():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Skip audio conversion due to FFmpeg unavailability
-        converted_path = filepath
+        # Convert WEBM to WAV if needed
+        if filepath.lower().endswith('.webm'):
+            wav_filename = os.path.splitext(filename)[0] + '.wav'
+            wav_filepath = os.path.join(app.config['UPLOAD_FOLDER'], wav_filename)
+            try:
+                audio = AudioSegment.from_file(filepath)
+                audio.export(wav_filepath, format='wav')
+                converted_path = wav_filepath
+                # Remove original webm file after conversion
+                os.remove(filepath)
+            except Exception as e:
+                app.logger.error(f"Error converting WEBM to WAV: {str(e)}")
+                return jsonify({'error': 'Failed to convert WEBM to WAV'}), 500
+        else:
+            converted_path = filepath
 
         # Get language parameter from form data or default to 'en-IN'
         language = request.form.get('language', 'en-IN')
@@ -74,7 +87,7 @@ def upload_audio():
                 llm_response = ""
 
         # Delete temporary file after processing
-        os.remove(filepath)
+        os.remove(converted_path)
 
         return jsonify({
             'transcription': transcription,
