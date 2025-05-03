@@ -230,6 +230,19 @@
   let isRecording = false;
 
   function displayEmotion(emotion, llmResponse, weightedEmotions) {
+    // Determine dominant emotion from weightedEmotions if available
+    if (weightedEmotions && Object.keys(weightedEmotions).length > 0) {
+      let dominantEmotion = "neutral";
+      let maxScore = -Infinity;
+      for (const [emo, score] of Object.entries(weightedEmotions)) {
+        if (score > maxScore) {
+          maxScore = score;
+          dominantEmotion = emo;
+        }
+      }
+      emotion = dominantEmotion;
+    }
+
     // Show detected emotion text
     detectedEmotionElem.textContent = "Detected Emotion: " + emotion;
 

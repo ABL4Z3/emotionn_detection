@@ -31,7 +31,15 @@ def speech_to_text(audio_file, language='en-IN'):
             logger.info("[Speech-to-Text] Transcribed Text: %s", text)
             return text
         except sr.UnknownValueError:
-            logger.error("Could not understand audio. Returning fallback text.")
+            logger.error("Could not understand audio. Trying fallback language if applicable.")
+            # Fallback for Japanese language codes
+            if language.startswith('ja'):
+                try:
+                    text = r.recognize_google(audio_data, language='ja-JP')
+                    logger.info("[Speech-to-Text] Fallback Transcribed Text: %s", text)
+                    return text
+                except Exception as e:
+                    logger.error(f"Fallback recognition failed: {str(e)}")
             return "[Error] Could not understand the audio."
         except sr.RequestError:
             logger.error("API request failed. Try again later.")
