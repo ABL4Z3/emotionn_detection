@@ -417,7 +417,7 @@
           transcriptArea.value = data.transcription || '';
           transcriptArea.readOnly = true;
           transcriptArea.placeholder = "Transcription from recorded audio";
-          displayEmotion(data.emotion || 'neutral', data.llm_response || '');
+displayEmotion(data.emotion || 'neutral', data.llm_response || '', data.weighted_emotions || {});
           warningMsg.style.display = 'none';
         } catch (error) {
           warningMsg.textContent = `Error processing recorded audio: ${error.message}`;
