@@ -1,47 +1,108 @@
-Voice Emotion Detector
-Overview
-Voice Emotion Detector is a sophisticated web application that analyzes emotions from voice recordings. It enables users to upload audio files or record live audio to detect emotions, receive empathetic responses, and track emotional patterns over time through visualizations and exportable history.
+# Voice Emotion Detector
 
-Features
-Upload voice recordings (wav, mp3, m4a) or record live audio.
-Multilingual support including English (India), Hindi, Japanese, Korean, Mandarin, Tamil, Telugu, Bengali, Marathi, Gujarati, Punjabi, Malayalam, Odia, and Assamese.
-Detects dominant emotions and provides detailed weighted emotion scores.
-Generates empathetic textual responses based on detected emotions.
-Maintains a timestamped emotion history with weighted scores.
-Visualizes mood patterns over time with interactive charts.
-Export emotion history as text or PDF files.
-User login/logout for personalized experience.
-Technology Stack
-Frontend: HTML5, CSS3, JavaScript, Chart.js for charts, jsPDF for PDF export.
-Backend: Python Flask (assumed) for audio processing and emotion analysis.
-Storage: Browser LocalStorage for session and history data.
-Installation and Usage
-Clone the repository:
+This is a web application that allows users to upload or record voice audio to detect emotions and receive empathetic responses. The application supports multi-language speech-to-text transcription, including English, Hindi, Japanese, Korean, Chinese, and various Indian languages.
 
+## Features
+
+- Upload audio files (WAV, WEBM) or record live audio.
+- Speech-to-text transcription using Google Speech Recognition API with multi-language support.
+- Emotion detection from transcribed text using sentiment analysis.
+- Empathetic response generation using LangChain Groq LLM.
+- Language selection for transcription to support various languages.
+- User-friendly web interface with transcription display, detected emotion, and empathetic response.
+
+## Technologies Used
+
+- Python Flask for backend API.
+- SpeechRecognition library for speech-to-text.
+- TextBlob for sentiment analysis.
+- Deep Translator for text translation.
+- LangChain Groq for empathetic response generation.
+- HTML, CSS, and JavaScript for frontend UI.
+- Web Audio API for live audio recording and conversion.
+
+## Installation
+
+1. Clone the repository:
+
+```bash
 git clone <repository-url>
-Navigate to the project directory:
-
 cd hackathon_tessarx
-Install dependencies:
+```
 
+2. Create and activate a Python virtual environment (optional but recommended):
+
+```bash
+python -m venv venv
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # macOS/Linux
+```
+
+3. Install the required Python packages:
+
+```bash
 pip install -r requirements.txt
-Run the backend server:
+```
 
+4. Set the Groq API key as an environment variable (optional, default key is used if not set):
+
+```bash
+set GROQ_API_KEY=your_groq_api_key_here  # Windows
+export GROQ_API_KEY=your_groq_api_key_here  # macOS/Linux
+```
+
+## Usage
+
+1. Run the Flask application:
+
+```bash
 python app.py
-Open index.html in a modern browser or access the local server URL.
-Usage Instructions
-Upload or record audio.
-Select language for transcription.
-View transcription, detected emotions, and empathetic responses.
-Monitor emotion history and mood trends.
-Export history as text or PDF.
-Log in to personalize your experience.
-Contributing
-Contributions are welcome. Please fork the repository and submit pull requests.
+```
 
-License
-MIT License.
+2. Open your web browser and navigate to:
 
-Contact
-For support or inquiries, contact the project maintainer.
-If you want me to assist with anything else, please let me know.
+```
+http://localhost:5000/
+```
+
+3. Use the web interface to:
+
+- Upload an audio file or record live audio.
+- Select the language of the audio from the dropdown.
+- View the transcribed text, detected emotion, and empathetic response.
+
+## Supported Languages
+
+- English (India)
+- Hindi
+- Japanese
+- Korean
+- Chinese (Mandarin)
+- Tamil
+- Telugu
+- Bengali
+- Marathi
+- Gujarati
+- Punjabi
+- Malayalam
+- Odia
+- Assamese
+
+## Notes
+
+- Only WAV and WEBM audio file formats are supported for upload.
+- The application uses Google Speech Recognition API, which requires internet connectivity.
+- The empathetic response is generated using LangChain Groq LLM and requires a valid API key.
+- The maximum upload size is 16 MB.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgments
+
+- [SpeechRecognition](https://pypi.org/project/SpeechRecognition/)
+- [TextBlob](https://textblob.readthedocs.io/en/dev/)
+- [Deep Translator](https://github.com/nidhaloff/deep-translator)
+- [LangChain Groq](https://github.com/groq-ai/langchain-groq)
+- Inspired by voice emotion detection and empathetic AI research.
