@@ -567,6 +567,7 @@
     historyListElem.innerHTML = '';
     if (history.length > 0) {
       historySection.style.display = 'block';
+      exportSection.style.display = 'block';
       history.forEach(entry => {
         const li = document.createElement('li');
         li.style.marginBottom = '0.5rem';
@@ -575,6 +576,7 @@
       });
     } else {
       historySection.style.display = 'none';
+      exportSection.style.display = 'none';
     }
   }
 
