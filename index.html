@@ -172,54 +172,43 @@
   </div>
 
   <div id="warningMsg" class="warning" style="display:none;"></div>
-</main>
-<footer>
-  &copy; 2024 Voice Emotion Detector. Uses Web Speech API & client-side sentiment analysis.
-</footer>
+  </main>
+  <section id="userSection" style="margin-top: 1rem; background: rgba(255 255 255 / 0.1); border-radius: 12px; padding: 1rem; max-width: 750px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.3); color: #fff;">
+    <h2>User Profile</h2>
+    <div id="loginForm">
+      <input type="text" id="usernameInput" placeholder="Enter username" style="padding: 0.5rem; border-radius: 8px; border: none; width: 60%;" />
+      <button id="loginBtn" style="padding: 0.5rem 1rem; border-radius: 8px; background: #764ba2; border: none; color: #fff; cursor: pointer;">Login</button>
+    </div>
+    <div id="userInfo" style="display:none;">
+      <p>Logged in as: <span id="currentUsername"></span></p>
+      <button id="logoutBtn" style="padding: 0.5rem 1rem; border-radius: 8px; background: #e65858; border: none; color: #fff; cursor: pointer;">Logout</button>
+    </div>
+  </section>
 
+  <section id="historySection" style="margin-top: 1rem; background: rgba(255 255 255 / 0.1); border-radius: 12px; padding: 1rem; max-width: 750px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.3); color: #fff; display:none;">
+    <h2>Emotion History</h2>
+    <button id="clearHistoryBtn" style="padding: 0.5rem 1rem; border-radius: 8px; background: #f44336; border: none; color: #fff; cursor: pointer; margin-bottom: 1rem;">Clear History</button>
+    <ul id="historyList" style="list-style: none; padding-left: 0; max-height: 200px; overflow-y: auto;"></ul>
+  </section>
+
+  <section id="exportSection" style="margin-top: 1rem; background: rgba(255 255 255 / 0.1); border-radius: 12px; padding: 1rem; max-width: 750px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.3); color: #fff; display:none;">
+    <h2>Export & Share</h2>
+    <button id="exportTextBtn" style="padding: 0.5rem 1rem; border-radius: 8px; background: #2196f3; border: none; color: #fff; cursor: pointer; margin-right: 1rem;">Export as Text</button>
+    <button id="exportPdfBtn" style="padding: 0.5rem 1rem; border-radius: 8px; background: #4caf50; border: none; color: #fff; cursor: pointer;">Export as PDF</button>
+  </section>
+
+  <section id="sentimentChartSection" style="margin-top: 1rem; background: rgba(255 255 255 / 0.1); border-radius: 12px; padding: 1rem; max-width: 750px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.3); color: #fff; display:none;">
+    <h2>Sentiment Analysis Over Time</h2>
+    <canvas id="sentimentLineChart" style="max-width: 100%; height: 150px;"></canvas>
+  </section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Sentiment analysis library (simple polarity based)
-  class Sentiment {
-    constructor() {
-      this.positiveWords = ["happy", "joy", "love", "excited", "great", "wonderful", "fantastic", "good", "pleased", "delight"];
-      this.negativeWords = ["sad", "anger", "angry", "upset", "bad", "hate", "terrible", "worst", "frustrated", "depressed"];
-      this.sadWords = ["sad", "depressed", "heartbroken", "lonely", "cry", "tears", "melancholy"];
-      this.angryWords = ["angry", "frustrated", "mad", "furious", "irritated", "annoyed"];
-      this.happyWords = ["happy", "joy", "pleased", "excited", "delight", "smile", "cheerful"];
-      this.fearWords = ["fear", "scared", "nervous", "anxious", "worried"];
-      this.surpriseWords = ["surprise", "amazed", "astonished", "shocked"];
-    }
-    analyze(text) {
-      const textLower = text.toLowerCase();
-      let score = 0;
-      let emotionCount = {happy:0, sad:0, angry:0, fear:0, surprise:0, neutral:0};
-      
-      // Simple count how many words match each emotion category
-      this.happyWords.forEach(w => { if(textLower.includes(w)) emotionCount.happy++; });
-      this.sadWords.forEach(w => { if(textLower.includes(w)) emotionCount.sad++; });
-      this.angryWords.forEach(w => { if(textLower.includes(w)) emotionCount.angry++; });
-      this.fearWords.forEach(w => { if(textLower.includes(w)) emotionCount.fear++; });
-      this.surpriseWords.forEach(w => { if(textLower.includes(w)) emotionCount.surprise++; });
-
-      // Determine dominant emotion or neutral
-      let dominantEmotion = "neutral";
-      let maxCount = 0;
-      for(const [emotion, count] of Object.entries(emotionCount)) {
-        if(count > maxCount) {
-          maxCount = count;
-          dominantEmotion = emotion;
-        }
-      }
-      return dominantEmotion;
-    }
-  }
-
-  const sentiment = new Sentiment();
-
+  // Add back event listeners for recordButton and audioUpload to restore input functionality
   const recordButton = document.getElementById('recordButton');
-  const transcriptArea = document.getElementById('transcript');
   const audioUpload = document.getElementById('audioUpload');
+  const transcriptArea = document.getElementById('transcript');
   const emotionResultSection = document.getElementById('emotionResult');
   const detectedEmotionElem = document.getElementById('detectedEmotion');
   const emotionTipsElem = document.getElementById('emotionTips');
@@ -229,77 +218,33 @@
   let audioChunks = [];
   let isRecording = false;
 
-  function displayEmotion(emotion, llmResponse, weightedEmotions) {
-    // Determine dominant emotion from weightedEmotions if available
-    if (weightedEmotions && Object.keys(weightedEmotions).length > 0) {
-      let dominantEmotion = "neutral";
-      let maxScore = -Infinity;
-      for (const [emo, score] of Object.entries(weightedEmotions)) {
-        if (score > maxScore) {
-          maxScore = score;
-          dominantEmotion = emo;
-        }
-      }
-      emotion = dominantEmotion;
-    }
-
-    // Show detected emotion text
-    detectedEmotionElem.textContent = "Detected Emotion: " + emotion;
-
-    // Show weighted emotion scores below detected emotion
-    let weightedEmotionElem = document.getElementById('weightedEmotionScores');
-    if (!weightedEmotionElem) {
-      weightedEmotionElem = document.createElement('div');
-      weightedEmotionElem.id = 'weightedEmotionScores';
-      weightedEmotionElem.style.marginTop = '0.5rem';
-      weightedEmotionElem.style.fontWeight = '600';
-      emotionResultSection.appendChild(weightedEmotionElem);
-    }
-    if (weightedEmotions && Object.keys(weightedEmotions).length > 0) {
-      let scoresText = "Weighted Emotion Scores: ";
-      scoresText += Object.entries(weightedEmotions)
-        .map(([emotion, score]) => `${emotion}: ${score}`)
-        .join(", ");
-      weightedEmotionElem.textContent = scoresText;
-
-      // Update or create pie chart
-      updatePieChart(weightedEmotions);
-    } else {
-      weightedEmotionElem.textContent = "";
-      clearPieChart();
-    }
-
-    emotionTipsElem.textContent = llmResponse ? "" : "No empathetic response available.";
-    emotionResultSection.style.display = "block";
-    const llmResponseElem = document.getElementById('llmResponse');
-    llmResponseElem.value = llmResponse || "";
-  }
-
-  let pieChart = null;
+  let weightedEmotionChartInstance = null;
 
   function updatePieChart(weightedEmotions) {
     const ctx = document.getElementById('weightedEmotionChart').getContext('2d');
     const labels = Object.keys(weightedEmotions);
     const data = Object.values(weightedEmotions);
 
-    if (pieChart) {
-      pieChart.data.labels = labels;
-      pieChart.data.datasets[0].data = data;
-      pieChart.update();
+    if (weightedEmotionChartInstance) {
+      weightedEmotionChartInstance.data.labels = labels;
+      weightedEmotionChartInstance.data.datasets[0].data = data;
+      weightedEmotionChartInstance.update();
     } else {
-      pieChart = new Chart(ctx, {
+      weightedEmotionChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: labels,
           datasets: [{
+            label: 'Emotion Weights',
             data: data,
             backgroundColor: [
               '#4caf50', // green
-              '#f44336', // red
-              '#ff9800', // orange
               '#2196f3', // blue
+              '#ffeb3b', // yellow
+              '#f44336', // red
               '#9c27b0', // purple
-              '#ffeb3b'  // yellow
+              '#ff9800', // orange
+              '#607d8b'  // blue grey
             ],
             borderWidth: 1
           }]
@@ -320,18 +265,10 @@
   }
 
   function clearPieChart() {
-    if (pieChart) {
-      pieChart.destroy();
-      pieChart = null;
+    if (weightedEmotionChartInstance) {
+      weightedEmotionChartInstance.destroy();
+      weightedEmotionChartInstance = null;
     }
-  }
-
-  function resetUI() {
-    transcriptArea.value = "";
-    detectedEmotionElem.textContent = "";
-    emotionTipsElem.textContent = "";
-    emotionResultSection.style.display = "none";
-    warningMsg.style.display = "none";
   }
 
   async function startRecording() {
@@ -343,7 +280,6 @@
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Use 'audio/webm' mimeType for better compatibility
       mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       audioChunks = [];
       mediaRecorder.ondataavailable = event => {
@@ -352,11 +288,7 @@
         }
       };
       mediaRecorder.onstop = async () => {
-        // Convert recorded audio chunks to WAV Blob before sending
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        console.log("Recorded audio blob size:", audioBlob.size, "type:", audioBlob.type);
-
-        // Convert webm Blob to WAV Blob using Web Audio API
         const arrayBuffer = await audioBlob.arrayBuffer();
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
@@ -364,7 +296,7 @@
         function encodeWAV(audioBuffer) {
           const numChannels = audioBuffer.numberOfChannels;
           const sampleRate = audioBuffer.sampleRate;
-          const format = 1; // PCM
+          const format = 1;
           const bitDepth = 16;
 
           let samples;
@@ -379,34 +311,20 @@
           const buffer = new ArrayBuffer(44 + samples.length * 2);
           const view = new DataView(buffer);
 
-          /* RIFF identifier */
           writeString(view, 0, 'RIFF');
-          /* file length */
           view.setUint32(4, 36 + samples.length * 2, true);
-          /* RIFF type */
           writeString(view, 8, 'WAVE');
-          /* format chunk identifier */
           writeString(view, 12, 'fmt ');
-          /* format chunk length */
           view.setUint32(16, 16, true);
-          /* sample format (raw) */
           view.setUint16(20, format, true);
-          /* channel count */
           view.setUint16(22, numChannels, true);
-          /* sample rate */
           view.setUint32(24, sampleRate, true);
-          /* byte rate (sample rate * block align) */
           view.setUint32(28, sampleRate * numChannels * bitDepth / 8, true);
-          /* block align (channel count * bytes per sample) */
           view.setUint16(32, numChannels * bitDepth / 8, true);
-          /* bits per sample */
           view.setUint16(34, bitDepth, true);
-          /* data chunk identifier */
           writeString(view, 36, 'data');
-          /* data chunk length */
           view.setUint32(40, samples.length * 2, true);
 
-          // Write the PCM samples
           floatTo16BitPCM(view, 44, samples);
 
           return new Blob([view], { type: 'audio/wav' });
@@ -443,7 +361,6 @@
 
         const wavBlob = encodeWAV(audioBuffer);
 
-        // Show recorded audio playback on screen
         const audioURL = URL.createObjectURL(wavBlob);
         let existingAudio = document.getElementById('recordedAudioPlayback');
         if (!existingAudio) {
@@ -457,7 +374,6 @@
         existingAudio.load();
         existingAudio.play();
 
-        // Send WAV Blob to backend
         const formData = new FormData();
         formData.append('audio', wavBlob, 'recorded_audio.wav');
         formData.append('language', document.getElementById('languageSelect').value);
@@ -512,13 +428,11 @@
     }
   });
 
-  // Handle audio file upload
   audioUpload.addEventListener('change', async (e) => {
     resetUI();
     const file = e.target.files[0];
     if (!file) return;
 
-    // Upload audio file to backend for processing
     const formData = new FormData();
     formData.append('audio', file);
     formData.append('language', document.getElementById('languageSelect').value);
@@ -541,7 +455,6 @@
       transcriptArea.readOnly = true;
       transcriptArea.placeholder = "Transcription from uploaded audio";
 
-      // Defensive check and parse weighted_emotions if string
       let weightedEmotions = data.weighted_emotions || {};
       if (typeof weightedEmotions === 'string') {
         try {
@@ -554,7 +467,6 @@
       displayEmotion(data.emotion || 'neutral', data.llm_response || '', weightedEmotions);
       warningMsg.style.display = 'none';
 
-      // Clear file input value to allow re-uploading the same file if needed
       audioUpload.value = '';
     } catch (error) {
       warningMsg.innerHTML = `Error processing audio file: ${error.message}<br>
@@ -562,7 +474,6 @@
         Alternatively, you can transcribe your audio by external tools and paste text into the box below for emotion analysis.`;
       warningMsg.style.display = 'block';
 
-      // Allow user to paste transcription as fallback
       transcriptArea.readOnly = false;
       transcriptArea.placeholder = "Paste your transcription here...";
       transcriptArea.value = "";
@@ -580,6 +491,197 @@
       }
     }
   });
+
+  function resetUI() {
+    transcriptArea.value = "";
+    detectedEmotionElem.textContent = "";
+    emotionTipsElem.textContent = "";
+    emotionResultSection.style.display = "none";
+    warningMsg.style.display = "none";
+  }
+
+  // Function to update UI with detected emotion, weighted scores, pie chart, and LLM response
+  function displayEmotion(emotion, llmResponse, weightedEmotions) {
+    // Determine dominant emotion from weightedEmotions if available
+    if (weightedEmotions && Object.keys(weightedEmotions).length > 0) {
+      let dominantEmotion = "neutral";
+      let maxScore = -Infinity;
+      for (const [emo, score] of Object.entries(weightedEmotions)) {
+        if (score > maxScore) {
+          maxScore = score;
+          dominantEmotion = emo;
+        }
+      }
+      emotion = dominantEmotion;
+    }
+
+    // Show detected emotion text
+    detectedEmotionElem.textContent = "Detected Emotion: " + emotion;
+
+    // Show weighted emotion scores below detected emotion
+    let weightedEmotionElem = document.getElementById('weightedEmotionScores');
+    if (!weightedEmotionElem) {
+      weightedEmotionElem = document.createElement('div');
+      weightedEmotionElem.id = 'weightedEmotionScores';
+      weightedEmotionElem.style.marginTop = '0.5rem';
+      weightedEmotionElem.style.fontWeight = '600';
+      emotionResultSection.appendChild(weightedEmotionElem);
+    }
+    if (weightedEmotions && Object.keys(weightedEmotions).length > 0) {
+      let scoresText = "Weighted Emotion Scores: ";
+      scoresText += Object.entries(weightedEmotions)
+        .map(([emotion, score]) => `${emotion}: ${score}`)
+        .join(", ");
+      weightedEmotionElem.textContent = scoresText;
+
+      // Update or create pie chart
+      updatePieChart(weightedEmotions);
+    } else {
+      weightedEmotionElem.textContent = "";
+      clearPieChart();
+    }
+
+    emotionTipsElem.textContent = llmResponse ? "" : "No empathetic response available.";
+    emotionResultSection.style.display = "block";
+    const llmResponseElem = document.getElementById('llmResponse');
+    if (llmResponseElem) {
+      llmResponseElem.value = llmResponse || "";
+    }
+
+    // Add to history
+    addToHistory({
+      timestamp: new Date().toLocaleString(),
+      emotion: emotion,
+      llmResponse: llmResponse,
+      weightedEmotions: weightedEmotions
+    });
+  }
+
+  // History management
+  const historyListElem = document.getElementById('historyList');
+  const historySection = document.getElementById('historySection');
+  const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+  function loadHistory() {
+    const history = JSON.parse(localStorage.getItem('emotionHistory') || '[]');
+    historyListElem.innerHTML = '';
+    if (history.length > 0) {
+      historySection.style.display = 'block';
+      history.forEach(entry => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '0.5rem';
+        li.textContent = `[${entry.timestamp}] Emotion: ${entry.emotion}, Empathy: ${entry.llmResponse}`;
+        historyListElem.appendChild(li);
+      });
+    } else {
+      historySection.style.display = 'none';
+    }
+  }
+
+  function addToHistory(entry) {
+    const history = JSON.parse(localStorage.getItem('emotionHistory') || '[]');
+    history.unshift(entry);
+    if (history.length > 50) {
+      history.pop();
+    }
+    localStorage.setItem('emotionHistory', JSON.stringify(history));
+    loadHistory();
+  }
+
+  clearHistoryBtn.addEventListener('click', () => {
+    localStorage.removeItem('emotionHistory');
+    loadHistory();
+  });
+
+  // User login/logout
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const usernameInput = document.getElementById('usernameInput');
+  const loginForm = document.getElementById('loginForm');
+  const userInfo = document.getElementById('userInfo');
+  const currentUsernameElem = document.getElementById('currentUsername');
+
+  function updateUserUI() {
+    const username = localStorage.getItem('username');
+    if (username) {
+      loginForm.style.display = 'none';
+      userInfo.style.display = 'block';
+      currentUsernameElem.textContent = username;
+    } else {
+      loginForm.style.display = 'block';
+      userInfo.style.display = 'none';
+      currentUsernameElem.textContent = '';
+    }
+  }
+
+  loginBtn.addEventListener('click', () => {
+    const username = usernameInput.value.trim();
+    if (username) {
+      localStorage.setItem('username', username);
+      updateUserUI();
+    } else {
+      alert('Please enter a username to login.');
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('username');
+    updateUserUI();
+  });
+
+  updateUserUI();
+
+  // Export functionality
+  const exportTextBtn = document.getElementById('exportTextBtn');
+  const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+  exportTextBtn.addEventListener('click', () => {
+    const history = JSON.parse(localStorage.getItem('emotionHistory') || '[]');
+    if (history.length === 0) {
+      alert('No history to export.');
+      return;
+    }
+    let textContent = 'Emotion History Export\n\n';
+    history.forEach(entry => {
+      textContent += `[${entry.timestamp}] Emotion: ${entry.emotion}\nEmpathy: ${entry.llmResponse}\n\n`;
+    });
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'emotion_history.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  exportPdfBtn.addEventListener('click', () => {
+    const history = JSON.parse(localStorage.getItem('emotionHistory') || '[]');
+    if (history.length === 0) {
+      alert('No history to export.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    let y = 10;
+    doc.text('Emotion History Export', 10, y);
+    y += 10;
+    history.forEach(entry => {
+      doc.text(`[${entry.timestamp}] Emotion: ${entry.emotion}`, 10, y);
+      y += 7;
+      const splitText = doc.splitTextToSize(`Empathy: ${entry.llmResponse}`, 180);
+      doc.text(splitText, 10, y);
+      y += splitText.length * 7 + 5;
+      if (y > 270) {
+        doc.addPage();
+        y = 10;
+      }
+    });
+    doc.save('emotion_history.pdf');
+  });
+
+  // Load history on page load
+  loadHistory();
 </script>
 </body>
 </html>
