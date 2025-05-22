@@ -22,49 +22,62 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
+        .chat-container {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
-        .form-group {
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .user-message {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+
+        .assistant-message {
+            background: #f5f5f5;
+            margin-right: 20%;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #34495e;
-            font-weight: 600;
-        }
-
-        input, select {
-            width: 100%;
+        input[type="text"] {
+            flex: 1;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
         }
 
-        .voice-input {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .send-btn {
+            background: #2ecc71;
+            color: white;
         }
 
         .voice-btn {
             background: #3498db;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .voice-btn:hover {
-            background: #2980b9;
         }
 
         .voice-btn.recording {
@@ -78,33 +91,26 @@
             100% { transform: scale(1); }
         }
 
-        .submit-btn {
-            background: #2ecc71;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            font-weight: 600;
+        form {
             margin-top: 20px;
         }
 
-        .submit-btn:hover {
-            background: #27ae60;
+        .form-group {
+            margin-bottom: 15px;
         }
 
-        .assistant-container {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
-        .assistant-message {
-            color: #2c3e50;
-            margin-bottom: 10px;
+        .submit-btn {
+            background: #2ecc71;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
         }
 
         #confirmationModal {
@@ -119,8 +125,8 @@
 
         .modal-content {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 8px;
             max-width: 500px;
             margin: 50px auto;
         }
@@ -128,26 +134,8 @@
         .modal-buttons {
             display: flex;
             gap: 10px;
-            justify-content: center;
+            justify-content: flex-end;
             margin-top: 20px;
-        }
-
-        .modal-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .confirm-btn {
-            background: #2ecc71;
-            color: white;
-        }
-
-        .cancel-btn {
-            background: #e74c3c;
-            color: white;
         }
     </style>
 </head>
@@ -155,88 +143,52 @@
     <div class="container">
         <h1>Railway Booking Assistant</h1>
         
-        <form id="bookingForm">
-            <div class="form-group">
-                <label for="name">Full Name:</label>
-                <div class="voice-input">
-                    <input type="text" id="name" name="name" required>
-                    <button type="button" class="voice-btn" data-field="name">
-                        <span>🎤</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="from">From Station:</label>
-                <div class="voice-input">
-                    <input type="text" id="from" name="from" required>
-                    <button type="button" class="voice-btn" data-field="from">
-                        <span>🎤</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="to">To Station:</label>
-                <div class="voice-input">
-                    <input type="text" id="to" name="to" required>
-                    <button type="button" class="voice-btn" data-field="to">
-                        <span>🎤</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="date">Travel Date:</label>
-                <div class="voice-input">
-                    <input type="date" id="date" name="date" required>
-                    <button type="button" class="voice-btn" data-field="date">
-                        <span>🎤</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="passengers">Number of Passengers:</label>
-                <div class="voice-input">
-                    <input type="number" id="passengers" name="passengers" min="1" max="6" required>
-                    <button type="button" class="voice-btn" data-field="passengers">
-                        <span>🎤</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="class">Class:</label>
-                <div class="voice-input">
-                    <select id="class" name="class" required>
-                        <option value="">Select Class</option>
-                        <option value="1A">First AC</option>
-                        <option value="2A">Second AC</option>
-                        <option value="3A">Third AC</option>
-                        <option value="SL">Sleeper</option>
-                    </select>
-                    <button type="button" class="voice-btn" data-field="class">
-                        <span>🎤</span>
-                    </button>
-                </div>
-            </div>
-
-            <button type="submit" class="submit-btn">Book Ticket</button>
-        </form>
-
-        <div class="assistant-container">
-            <div class="assistant-message">
-                Hello! I'm your booking assistant. You can either type or use the microphone buttons to fill the form.
-                Need help? Just ask me anything about the booking process!
-            </div>
-            <div class="voice-input">
-                <input type="text" id="userQuery" placeholder="Type your question or click the microphone">
-                <button type="button" class="voice-btn" data-field="query">
-                    <span>🎤</span>
-                </button>
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-message assistant-message">
+                Hello! I'm your booking assistant. I can help you book train tickets and answer your questions. 
+                You can talk to me using voice or text. How can I help you today?
             </div>
         </div>
+
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button class="voice-btn" id="voiceBtn">🎤</button>
+            <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+
+        <form id="bookingForm" style="display: none;">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="from">From Station:</label>
+                <input type="text" id="from" required>
+            </div>
+            <div class="form-group">
+                <label for="to">To Station:</label>
+                <input type="text" id="to" required>
+            </div>
+            <div class="form-group">
+                <label for="date">Travel Date:</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="passengers">Number of Passengers:</label>
+                <input type="number" id="passengers" min="1" max="6" required>
+            </div>
+            <div class="form-group">
+                <label for="class">Class:</label>
+                <select id="class" required>
+                    <option value="">Select Class</option>
+                    <option value="1A">First AC</option>
+                    <option value="2A">Second AC</option>
+                    <option value="3A">Third AC</option>
+                    <option value="SL">Sleeper</option>
+                </select>
+            </div>
+            <button type="submit" class="submit-btn">Book Ticket</button>
+        </form>
     </div>
 
     <div id="confirmationModal">
@@ -244,15 +196,26 @@
             <h2>Confirm Your Booking</h2>
             <div id="bookingSummary"></div>
             <div class="modal-buttons">
-                <button class="modal-btn confirm-btn" onclick="confirmBooking()">Confirm</button>
-                <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                <button onclick="confirmBooking()">Confirm</button>
+                <button onclick="closeModal()">Cancel</button>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { Groq } from '@groq/groq-sdk';
+
+        const groq = new Groq({
+            apiKey: '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'
+        });
+
         let recognition = null;
-        let currentField = null;
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const bookingForm = document.getElementById('bookingForm');
+        let formData = {};
 
         // Initialize speech recognition
         if ('webkitSpeechRecognition' in window) {
@@ -263,10 +226,9 @@
 
             recognition.onresult = (event) => {
                 const result = event.results[0][0].transcript;
-                if (currentField) {
-                    processVoiceInput(result, currentField);
-                }
+                userInput.value = result;
                 stopRecording();
+                handleUserInput(result);
             };
 
             recognition.onerror = (event) => {
@@ -275,141 +237,143 @@
             };
         }
 
-        // Add event listeners to voice buttons
-        document.querySelectorAll('.voice-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                if (recognition) {
-                    currentField = button.dataset.field;
-                    startRecording(button);
-                } else {
-                    alert('Speech recognition is not supported in your browser.');
-                }
-            });
+        voiceBtn.addEventListener('click', () => {
+            if (recognition) {
+                startRecording();
+            } else {
+                alert('Speech recognition is not supported in your browser.');
+            }
         });
 
-        function startRecording(button) {
-            stopRecording(); // Stop any ongoing recording
-            button.classList.add('recording');
+        sendBtn.addEventListener('click', () => {
+            const message = userInput.value.trim();
+            if (message) {
+                handleUserInput(message);
+                userInput.value = '';
+            }
+        });
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = userInput.value.trim();
+                if (message) {
+                    handleUserInput(message);
+                    userInput.value = '';
+                }
+            }
+        });
+
+        function startRecording() {
+            voiceBtn.classList.add('recording');
             recognition.start();
         }
 
         function stopRecording() {
-            document.querySelectorAll('.voice-btn').forEach(btn => {
-                btn.classList.remove('recording');
-            });
-            if (recognition) {
-                recognition.stop();
-            }
+            voiceBtn.classList.remove('recording');
+            recognition.stop();
         }
 
-        function processVoiceInput(text, field) {
-            if (field === 'query') {
-                handleAssistantQuery(text);
-                return;
-            }
+        async function handleUserInput(message) {
+            addMessage(message, 'user');
 
-            const input = document.getElementById(field);
-            if (!input) return;
-
-            switch (field) {
-                case 'date':
-                    // Convert spoken date to date format
-                    const dateMatch = text.match(/(\d{1,2})(st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)(?:\s+(\d{4}))?/i);
-                    if (dateMatch) {
-                        const day = dateMatch[1].padStart(2, '0');
-                        const month = new Date(Date.parse(dateMatch[3] + " 1, 2000")).getMonth() + 1;
-                        const year = dateMatch[4] || new Date().getFullYear();
-                        input.value = `${year}-${month.toString().padStart(2, '0')}-${day}`;
-                    }
-                    break;
-
-                case 'passengers':
-                    // Extract number from speech
-                    const num = text.match(/\d+/);
-                    if (num) {
-                        input.value = Math.min(Math.max(parseInt(num[0]), 1), 6);
-                    }
-                    break;
-
-                case 'class':
-                    // Map spoken class to select options
-                    const classMap = {
-                        'first ac': '1A',
-                        'first class': '1A',
-                        'second ac': '2A',
-                        'second class': '2A',
-                        'third ac': '3A',
-                        'third class': '3A',
-                        'sleeper': 'SL'
-                    };
-                    const spokenClass = text.toLowerCase();
-                    for (const [key, value] of Object.entries(classMap)) {
-                        if (spokenClass.includes(key)) {
-                            input.value = value;
-                            break;
+            try {
+                const completion = await groq.chat.completions.create({
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are a helpful railway booking assistant. Help users book train tickets and answer their questions.
+                                    Extract booking information when provided and guide users through the booking process.
+                                    Current form fields: name, from station, to station, date, number of passengers (1-6), class (1A, 2A, 3A, SL)`
+                        },
+                        {
+                            role: 'user',
+                            content: message
                         }
-                    }
-                    break;
+                    ],
+                    model: 'mixtral-8x7b-32768',
+                    temperature: 0.5,
+                });
 
-                default:
-                    input.value = text;
+                const response = completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that.";
+                addMessage(response, 'assistant');
+
+                // Extract booking information from the message
+                extractBookingInfo(message);
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage("I'm sorry, I encountered an error. Please try again.", 'assistant');
             }
         }
 
-        function handleAssistantQuery(query) {
-            query = query.toLowerCase();
-            let response = "I'm sorry, I don't understand that question. Can you please rephrase it?";
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}-message`;
+            messageDiv.textContent = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
 
-            // Simple pattern matching for common queries
-            if (query.includes('how') && query.includes('book')) {
-                response = "To book a ticket, simply fill in all the required fields in the form. You can either type or use the microphone buttons next to each field. Once you're done, click the 'Book Ticket' button.";
-            } else if (query.includes('class') || query.includes('classes')) {
-                response = "We offer four classes: First AC (1A), Second AC (2A), Third AC (3A), and Sleeper (SL). First AC is the most premium class with private compartments.";
-            } else if (query.includes('passenger') || query.includes('passengers')) {
-                response = "You can book for up to 6 passengers in a single booking.";
-            } else if (query.includes('date') || query.includes('when')) {
-                response = "You can book tickets up to 120 days in advance. Simply select your preferred travel date in the date field.";
+        function extractBookingInfo(message) {
+            // Simple pattern matching for demonstration
+            const patterns = {
+                name: /my name is (.+?)(,|\.|$)/i,
+                from: /from (.+?)(,|\.|to|$)/i,
+                to: /to (.+?)(,|\.|$)/i,
+                date: /(\d{1,2}(st|nd|rd|th)? (January|February|March|April|May|June|July|August|September|October|November|December)( \d{4})?)/i,
+                passengers: /(\d+) passenger/i,
+                class: /(first|second|third|sleeper) class/i
+            };
+
+            for (const [field, pattern] of Object.entries(patterns)) {
+                const match = message.match(pattern);
+                if (match) {
+                    formData[field] = match[1].trim();
+                    updateFormField(field, match[1].trim());
+                }
             }
 
-            document.querySelector('.assistant-message').textContent = response;
+            // Show form if we have some data
+            if (Object.keys(formData).length > 0) {
+                bookingForm.style.display = 'block';
+            }
+        }
+
+        function updateFormField(field, value) {
+            const input = document.getElementById(field);
+            if (input) {
+                input.value = value;
+            }
         }
 
         // Form submission handling
-        document.getElementById('bookingForm').addEventListener('submit', (e) => {
+        bookingForm.addEventListener('submit', (e) => {
             e.preventDefault();
             showConfirmation();
         });
 
         function showConfirmation() {
-            const form = document.getElementById('bookingForm');
             const summary = document.getElementById('bookingSummary');
             summary.innerHTML = `
-                <p><strong>Name:</strong> ${form.name.value}</p>
-                <p><strong>From:</strong> ${form.from.value}</p>
-                <p><strong>To:</strong> ${form.to.value}</p>
-                <p><strong>Date:</strong> ${form.date.value}</p>
-                <p><strong>Passengers:</strong> ${form.passengers.value}</p>
-                <p><strong>Class:</strong> ${form.class.options[form.class.selectedIndex].text}</p>
+                <p><strong>Name:</strong> ${document.getElementById('name').value}</p>
+                <p><strong>From:</strong> ${document.getElementById('from').value}</p>
+                <p><strong>To:</strong> ${document.getElementById('to').value}</p>
+                <p><strong>Date:</strong> ${document.getElementById('date').value}</p>
+                <p><strong>Passengers:</strong> ${document.getElementById('passengers').value}</p>
+                <p><strong>Class:</strong> ${document.getElementById('class').value}</p>
             `;
             document.getElementById('confirmationModal').style.display = 'block';
         }
 
-        function closeModal() {
+        window.closeModal = function() {
             document.getElementById('confirmationModal').style.display = 'none';
-        }
+        };
 
-        function confirmBooking() {
-            alert('Booking confirmed! In a real application, this would be sent to the server.');
+        window.confirmBooking = function() {
+            addMessage('Booking confirmed! Your ticket has been booked successfully.', 'assistant');
             closeModal();
-            document.getElementById('bookingForm').reset();
-        }
-
-        // Close modal when clicking outside
-        window.onclick = (event) => {
-            const modal = document.getElementById('confirmationModal');
-            if (event.target === modal) {
-                closeModal();
-            }
+            bookingForm.reset();
+            bookingForm.style.display = 'none';
+            formData = {};
         };
     </script>
 </body>
